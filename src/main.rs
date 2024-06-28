@@ -5,6 +5,7 @@ use crate::model::SemesterType::{Summer, Unknown, Winter};
 use crate::model::Speciality::{AiOverlords, Algorithms, ComputerGraphics, Parallelism, Robotics, Security, SoftwareEngineering, SystemArchitecture, Theoretics};
 
 mod model;
+mod z3model;
 
 const PROGRAMMING_ID: &str = "M-INFO-101174";
 const GBI_ID: &str = "M-INFO-101170";
@@ -53,7 +54,7 @@ fn get_bachelor_semester_1() -> Semester {
         modules: vec![programming, gbi, la1, hm1],
         semester_type: Winter,
         number: 1,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -102,7 +103,7 @@ fn get_bachelor_semester_2() -> Semester {
         module_type: Lecture { is_root: false },
         half_ects: 12,
         degree: Bachelor,
-        name: "HM1",
+        name: "HM2",
         identifier: "T-MATH-102233",
         semesters: vec![Summer],
         requirements: vec![],
@@ -112,7 +113,7 @@ fn get_bachelor_semester_2() -> Semester {
         modules: vec![algo, swt, dt, hm2, la2],
         semester_type: Summer,
         number: 2,
-        max_ects: 32,
+        max_ects: 58,
     }
 }
 
@@ -171,7 +172,7 @@ fn get_bachelor_semester_3() -> Semester {
         modules: vec![ro, tgi, os, wt, pse],
         semester_type: Winter,
         number: 3,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -228,7 +229,7 @@ fn get_bachelor_semester_4() -> Semester {
         modules: vec![infosec, rn, dbs, numerik, osdev],
         semester_type: Summer,
         number: 4,
-        max_ects: 23,
+        max_ects: 46,
     }
 }
 
@@ -256,7 +257,7 @@ fn get_bachelor_semester_5() -> Semester {
         modules: vec![propa, gki],
         semester_type: Winter,
         number: 5,
-        max_ects: 28,
+        max_ects: 56,
     }
 }
 
@@ -275,7 +276,7 @@ fn get_bachelor_semester_6() -> Semester {
         modules: vec![algo_pg],
         semester_type: Summer,
         number: 6,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -295,7 +296,7 @@ fn get_master_semester_1() -> Semester {
         modules: vec![],
         semester_type: Summer,
         number: 8,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -305,7 +306,7 @@ fn get_master_semester_2() -> Semester {
         modules: vec![],
         semester_type: Summer,
         number: 9,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -315,7 +316,7 @@ fn get_master_semester_3() -> Semester {
         modules: vec![],
         semester_type: Summer,
         number: 10,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -325,7 +326,7 @@ fn get_master_semester_4() -> Semester {
         modules: vec![],
         semester_type: Summer,
         number: 11,
-        max_ects: 32,
+        max_ects: 64,
     }
 }
 
@@ -675,4 +676,5 @@ fn main() {
         randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
 
     let plan = Plan::from_semesters_with_modules(&semesters, &modules);
+    dbg!(&plan.get_solutions());
 }
