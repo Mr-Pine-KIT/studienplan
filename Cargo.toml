@@ -1,0 +1,9 @@
+[package]
+name = "studienplan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.203", features = ["serde_derive"] }
+toml = "0.8.14"
+z3 = "0.12.1"
