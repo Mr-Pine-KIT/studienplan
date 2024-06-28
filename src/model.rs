@@ -1,10 +1,12 @@
+use std::f64;
+use std::fmt::{Display, format, Formatter, write};
 use serde::{Deserialize, Serialize};
 use z3::{ast, Config, Context, FuncDecl, SatResult, Solver, Sort, Symbol};
 use z3::ast::{Ast, Bool, Int};
 use crate::model::SemesterDegree::{Bachelor, Master};
 use crate::z3model::Z3Module;
 
-#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize, Ord, PartialOrd)]
 pub enum Speciality {
     Theoretics,
     Algorithms,
@@ -20,7 +22,7 @@ pub enum Speciality {
     SystemArchitecture,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Ord, PartialOrd)]
 pub enum Degree {
     Bachelor,
     Master(Vec<Speciality>),
@@ -56,6 +58,17 @@ pub struct Semester {
     pub(crate) semester_type: SemesterType,
 }
 
+impl Display for Semester {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut modules = self.modules.clone();
+        modules.sort_by(|module, other| module.degree.cmp(&other.degree));
+        let modules = modules.iter().map(|module| format!("{}", module)).collect::<Vec<_>>().join("\n\t");
+        let total_ects: i32 = self.modules.iter().map(|module| module.half_ects).sum();
+        let total_ects = f64::from(total_ects) / 2.0;
+        write!(f, "Semester {} ({:?}) - total {} ECTS:\n\t{}", self.number, self.semester_type, total_ects, modules)
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ModuleType {
     Lecture { is_root: bool },
@@ -72,6 +85,12 @@ pub struct Module {
     pub(crate) identifier: &'static str,
     pub(crate) requirements: Vec<&'static str>,
     pub(crate) semesters: Vec<SemesterType>,
+}
+
+impl Display for Module {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} [{}] as {:?} with {} ECTS", self.name, self.identifier, self.degree, f64::from(self.half_ects) / 2.0)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -145,12 +164,12 @@ impl Plan {
 
         // Totals
         let bachelor_min = 180 - 6 - 15 - 12;
-        let bachelor_max = Int::from_i64(&context, bachelor_min + 4);
-        let bachelor_min = Int::from_i64(&context, bachelor_min);
+        let bachelor_max = Int::from_i64(&context, (bachelor_min + 4) * 2);
+        let bachelor_min = Int::from_i64(&context, bachelor_min * 2);
 
         let master_min = 120 - 41;
-        let master_max = Int::from_i64(&context, master_min + 4);
-        let master_min = Int::from_i64(&context, master_min);
+        let master_max = Int::from_i64(&context, (master_min + 4) * 2);
+        let master_min = Int::from_i64(&context, (master_min) * 2);
 
         let mut bachelor_sum = Int::from_i64(&context, 0);
         let mut master_sum = Int::from_i64(&context, 0);
@@ -253,5 +272,12 @@ impl Plan {
             semesters,
             modules: vec![],
         })
+    }
+}
+
+impl Display for Plan {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let semesters= self.semesters.iter().map(|semester| format!("{}\n", semester)).collect::<String>();
+        write!(f, "{}", semesters)
     }
 }

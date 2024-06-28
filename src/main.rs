@@ -534,7 +534,7 @@ fn main() {
         module_type: Lecture { is_root: false },
         half_ects: 10,
         degree: Master(vec![Theoretics, Algorithms]),
-        name: "Algorithmische Grafentheorie",
+        name: "Algorithmische Graphentheorie",
         identifier: "M-INFO-100762",
         semesters: vec![Unknown],
         requirements: vec![ALGO2_ID],
@@ -676,5 +676,5 @@ fn main() {
         randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
 
     let plan = Plan::from_semesters_with_modules(&semesters, &modules);
-    dbg!(&plan.get_solutions());
+    println!("{}", plan.get_solutions().unwrap());
 }
