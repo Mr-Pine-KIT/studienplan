@@ -54,7 +54,7 @@ fn get_bachelor_semester_1() -> Semester {
         modules: vec![programming, gbi, la1, hm1],
         semester_type: Winter,
         number: 1,
-        max_ects: 64,
+        max_ects: 29 * 2,
     }
 }
 
@@ -257,7 +257,7 @@ fn get_bachelor_semester_5() -> Semester {
         modules: vec![propa, gki],
         semester_type: Winter,
         number: 5,
-        max_ects: 56,
+        max_ects: 56 - 12,
     }
 }
 
@@ -276,7 +276,7 @@ fn get_bachelor_semester_6() -> Semester {
         modules: vec![algo_pg],
         semester_type: Summer,
         number: 6,
-        max_ects: 64,
+        max_ects: 60,
     }
 }
 
@@ -304,7 +304,7 @@ fn get_master_semester_2() -> Semester {
     Semester {
         degrees: vec![SemesterDegree::Master],
         modules: vec![],
-        semester_type: Summer,
+        semester_type: Winter,
         number: 9,
         max_ects: 64,
     }
@@ -324,7 +324,7 @@ fn get_master_semester_4() -> Semester {
     Semester {
         degrees: vec![SemesterDegree::Master],
         modules: vec![],
-        semester_type: Summer,
+        semester_type: Winter,
         number: 11,
         max_ects: 64,
     }
