@@ -1,11 +1,14 @@
 use std::f64;
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
-use z3::{ast, Config, Context, FuncDecl, SatResult, Solver, Sort, Symbol};
+use z3::{Config, Context, FuncDecl, SatResult, Solver, Sort, Symbol};
 use z3::ast::{Ast, Bool, Datatype, Int};
+
 use crate::model::SemesterType::Unknown;
+use crate::model::Speciality::Telematics;
 use crate::z3model::Z3Module;
 
 #[derive(Debug, Display, Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Ord, PartialOrd, EnumIter, EnumString)]
@@ -141,12 +144,12 @@ impl Plan {
         let [bachelor, master] = &degree_values[..]
         else { panic!("aaaa") };
         let bachelor = bachelor.apply(&[]);
-        let master = master.apply(&[]);
+        let _master = master.apply(&[]);
 
         let [bachelor_tester, master_tester] = &degree_testers[..]
         else { panic!("aaaa") };
         
-        let (speciality_sort, speciality_values, speciality_testers) = Speciality::z3_enum(&context);
+        let (speciality_sort, speciality_values, _speciality_testers) = Speciality::z3_enum(&context);
         let speciality_values = speciality_values.iter().map(|val| val.apply(&[]).as_datatype().unwrap()).collect::<Vec<_>>();
 
         let first_specialty = Datatype::new_const(&context, "First specialty", &speciality_sort);
@@ -306,6 +309,31 @@ impl Plan {
                 let condition = is_semester.implies(&matches_degree);
                 solver.assert_and_track(&condition, &Bool::new_const(&context, format!("If {} is in semester {index} it has to be {:?}", z3_module.identifier, semester.degrees[0])));
             }
+        }
+        
+        // Check specialty ects requirements
+        for specialty in [&first_specialty, &second_specialty] {
+            let mut total_sum = Int::from_i64(&context, 0);
+            let mut without_root = Int::from_i64(&context, 0);
+            
+            for z3_module in &z3_modules {
+                let is_specialty = z3_module.associated_specialty._eq(specialty);
+                let is_relevant = is_specialty & &z3_module.used;
+                let total_count = is_relevant.ite(&z3_module.ects, &zero);
+                total_sum += total_count;
+                
+                let module = self.modules.iter().find(|module| module.identifier == z3_module.identifier).unwrap();
+                let is_root = matches!(module.module_type, ModuleType::Lecture {is_root: true});
+                let without_root_count = (is_root & is_relevant).ite(&z3_module.ects, &zero);
+                without_root += without_root_count
+            }
+
+            solver.assert_and_track(&total_sum.ge(&Int::from_i64(&context, 15)), &Bool::new_const(&context, "Specialty min ects (total)"));
+            let (telematics_index, _) = Speciality::iter().enumerate().find(|(_, entry)| *entry == Telematics).unwrap();
+            let telematics_value = &speciality_values[telematics_index];
+            let is_telematics = specialty._eq(telematics_value);
+            let min_without_root = is_telematics.ite(&Int::from_i64(&context, 8), &Int::from_i64(&context, 10));
+            solver.assert_and_track(&without_root.ge(&min_without_root), &Bool::new_const(&context, "Specialty min ects (without root)"))
         }
 
         if solver.check() == SatResult::Unsat {
