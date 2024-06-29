@@ -1,3 +1,4 @@
+use std::fmt::format;
 use strum::IntoEnumIterator;
 use z3::{ast, Context, FuncDecl, Solver, Sort};
 use z3::ast::{Ast, Bool, Datatype};
@@ -36,6 +37,10 @@ impl<'ctx> Z3Module<'ctx> {
         if module.degree == Bachelor {
             let is_bachelor = bachelor_tester.apply(&[&degree]).as_bool().unwrap();
             solver.assert_and_track(&is_bachelor, &Bool::new_const(context, format!("is_bachelor_{}_{}", module.name, module.identifier)));
+        }
+        
+        if module.force {
+            solver.assert_and_track(&used, &Bool::new_const(context, format!("Module {}_{} was forced", module.name, module.identifier)))
         }
 
         Z3Module {

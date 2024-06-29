@@ -21,6 +21,7 @@ fn get_bachelor_semester_1() -> Semester {
         identifier: PROGRAMMING_ID,
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     let gbi = Module {
         module_type: Lecture { is_root: false },
@@ -30,6 +31,7 @@ fn get_bachelor_semester_1() -> Semester {
         identifier: GBI_ID,
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     let la1 = Module {
         module_type: Lecture { is_root: false },
@@ -39,6 +41,7 @@ fn get_bachelor_semester_1() -> Semester {
         identifier: LA1_ID,
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     let hm1 = Module {
         module_type: Lecture { is_root: false },
@@ -48,6 +51,7 @@ fn get_bachelor_semester_1() -> Semester {
         identifier: HM1_ID,
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     Semester {
         degrees: vec![SemesterDegree::Bachelor],
@@ -71,6 +75,7 @@ fn get_bachelor_semester_2() -> Semester {
         identifier: "M-INFO-101175",
         semesters: vec![Summer],
         requirements: vec![PROGRAMMING_ID],
+        force: false,
     };
     let algo = Module {
         module_type: Lecture { is_root: false },
@@ -80,6 +85,7 @@ fn get_bachelor_semester_2() -> Semester {
         identifier: ALGO1_ID,
         semesters: vec![Summer],
         requirements: vec![GBI_ID],
+        force: false,
     };
     let dt = Module {
         module_type: Lecture { is_root: false },
@@ -89,6 +95,7 @@ fn get_bachelor_semester_2() -> Semester {
         identifier: DT_ID,
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     let la2 = Module {
         module_type: Lecture { is_root: false },
@@ -98,6 +105,7 @@ fn get_bachelor_semester_2() -> Semester {
         identifier: LA2_ID,
         semesters: vec![Summer],
         requirements: vec![LA1_ID],
+        force: false,
     };
     let hm2 = Module {
         module_type: Lecture { is_root: false },
@@ -107,6 +115,7 @@ fn get_bachelor_semester_2() -> Semester {
         identifier: "T-MATH-102233",
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     Semester {
         degrees: vec![SemesterDegree::Bachelor],
@@ -130,6 +139,7 @@ fn get_bachelor_semester_3() -> Semester {
         identifier: "24502",
         semesters: vec![Winter],
         requirements: vec![DT_ID],
+        force: false,
     };
     let tgi = Module {
         module_type: Lecture { is_root: false },
@@ -139,6 +149,7 @@ fn get_bachelor_semester_3() -> Semester {
         identifier: TGI_ID,
         semesters: vec![Winter],
         requirements: vec![ALGO1_ID],
+        force: false,
     };
     let os = Module {
         module_type: Lecture { is_root: false },
@@ -148,6 +159,7 @@ fn get_bachelor_semester_3() -> Semester {
         identifier: OS_ID,
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     let wt = Module {
         module_type: Lecture { is_root: false },
@@ -157,6 +169,7 @@ fn get_bachelor_semester_3() -> Semester {
         identifier: WT_ID,
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     let pse = Module {
         module_type: Lab,
@@ -166,6 +179,7 @@ fn get_bachelor_semester_3() -> Semester {
         identifier: "M-INFO-101176",
         semesters: vec![Winter],
         requirements: vec![],
+        force: false,
     };
     Semester {
         degrees: vec![SemesterDegree::Bachelor],
@@ -187,6 +201,7 @@ fn get_bachelor_semester_4() -> Semester {
         identifier: INFOSEC_ID,
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     let rn = Module {
         module_type: Lecture { is_root: false },
@@ -196,6 +211,7 @@ fn get_bachelor_semester_4() -> Semester {
         identifier: "T-INFO-102015",
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     let dbs = Module {
         module_type: Lecture { is_root: false },
@@ -205,6 +221,7 @@ fn get_bachelor_semester_4() -> Semester {
         identifier: "T-INFO-101497 ",
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     let numerik = Module {
         module_type: Lecture { is_root: false },
@@ -214,6 +231,7 @@ fn get_bachelor_semester_4() -> Semester {
         identifier: "T-MATH-102242",
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     let osdev = Module {
         module_type: Lab,
@@ -223,6 +241,7 @@ fn get_bachelor_semester_4() -> Semester {
         identifier: "OSDev",
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
     Semester {
         degrees: vec![SemesterDegree::Bachelor],
@@ -242,6 +261,7 @@ fn get_bachelor_semester_5() -> Semester {
         identifier: "M-INFO-101179",
         semesters: vec![Winter],
         requirements: vec![TGI_ID],
+        force: false,
     };
     let gki = Module {
         module_type: Lecture { is_root: false },
@@ -251,10 +271,22 @@ fn get_bachelor_semester_5() -> Semester {
         identifier: "M-INFO-106014",
         semesters: vec![Winter],
         requirements: vec![LA2_ID, WT_ID],
+        force: false,
+    };
+
+    let proseminar = Module {
+        module_type: Seminar { is_pro: true },
+        half_ects: 6,
+        degree: Bachelor,
+        name: "Proseminar",
+        identifier: "proseminar",
+        semesters: vec![Winter, Summer],
+        requirements: vec![],
+        force: false,
     };
     Semester {
         degrees: vec![SemesterDegree::Bachelor, SemesterDegree::Master],
-        modules: vec![propa, gki],
+        modules: vec![propa, gki, proseminar],
         semester_type: Winter,
         number: 5,
         max_ects: 56 - 12,
@@ -270,6 +302,7 @@ fn get_bachelor_semester_6() -> Semester {
         identifier: "M-INFO-101220",
         semesters: vec![Summer],
         requirements: vec![ALGO1_ID, TGI_ID],
+        force: false,
     };
     Semester {
         degrees: vec![SemesterDegree::Bachelor, SemesterDegree::Master],
@@ -345,16 +378,6 @@ fn main() {
         get_master_semester_4(),
     ];
 
-    let proseminar = Module {
-        module_type: Seminar { is_pro: true },
-        half_ects: 6,
-        degree: Bachelor,
-        name: "Proseminar",
-        identifier: "proseminar",
-        semesters: vec![Winter, Summer],
-        requirements: vec![],
-    };
-
     const FORMSYS_ID: &str = "M-INFO-100799";
     let formsys = Module {
         module_type: Lecture { is_root: true },
@@ -364,6 +387,7 @@ fn main() {
         identifier: FORMSYS_ID,
         semesters: vec![Winter],
         requirements: vec![TGI_ID],
+        force: false,
     };
 
     const CG_ID: &str = "M-INFO-100856";
@@ -375,6 +399,7 @@ fn main() {
         identifier: CG_ID,
         semesters: vec![Winter],
         requirements: vec![LA2_ID],
+        force: false,
     };
 
     const ALGO2_ID: &str = "M-INFO-101173";
@@ -386,6 +411,7 @@ fn main() {
         identifier: ALGO2_ID,
         semesters: vec![Winter],
         requirements: vec![ALGO1_ID],
+        force: false,
     };
 
     const ITSEC_ID: &str = "M-INFO-106315";
@@ -397,6 +423,7 @@ fn main() {
         identifier: ITSEC_ID,
         semesters: vec![Winter],
         requirements: vec![INFOSEC_ID],
+        force: false,
     };
 
     const ROBOTICS_ID: &str = "M-INFO-100893";
@@ -408,6 +435,7 @@ fn main() {
         identifier: ROBOTICS_ID,
         semesters: vec![Winter],
         requirements: vec![LA2_ID],
+        force: false,
     };
 
     let formsys2_therory = Module {
@@ -418,6 +446,7 @@ fn main() {
         identifier: "M-INFO-100841",
         semesters: vec![Summer],
         requirements: vec![FORMSYS_ID],
+        force: false,
     };
     let formsys2_application = Module {
         module_type: Lecture { is_root: false },
@@ -427,6 +456,7 @@ fn main() {
         identifier: "M-INFO-100744",
         semesters: vec![Summer],
         requirements: vec![FORMSYS_ID],
+        force: false,
     };
 
     const PRACTICAL_SAT_ID: &str = "M-INFO-102825";
@@ -438,6 +468,7 @@ fn main() {
         identifier: PRACTICAL_SAT_ID,
         semesters: vec![Unknown],
         requirements: vec![FORMSYS_ID],
+        force: false,
     };
 
     let algorithm_engineering = Module {
@@ -448,6 +479,7 @@ fn main() {
         identifier: "M-INFO-106086",
         semesters: vec![Unknown],
         requirements: vec![ALGO2_ID],
+        force: false,
     };
 
     let clogic = Module {
@@ -458,6 +490,7 @@ fn main() {
         identifier: "M-INFO-106256",
         semesters: vec![Summer],
         requirements: vec![],
+        force: false,
     };
 
     let cps_logical_foundations = Module {
@@ -467,7 +500,8 @@ fn main() {
         name: "Logical foundations of cyber-physical systems",
         identifier: "M-INFO-106102",
         semesters: vec![Winter],
-        requirements: vec![],
+        requirements: vec![FORMSYS_ID],
+        force: false,
     };
 
     let complexity_theory = Module {
@@ -478,6 +512,7 @@ fn main() {
         identifier: "M-INFO-106644",
         semesters: vec![Unknown],
         requirements: vec![],
+        force: false,
     };
 
     let parameterized_algos = Module {
@@ -488,6 +523,7 @@ fn main() {
         identifier: "M-INFO-105621",
         semesters: vec![Unknown],
         requirements: vec![ALGO1_ID],
+        force: false,
     };
 
     let seminar_complexity_theory = Module {
@@ -498,6 +534,7 @@ fn main() {
         identifier: "M-INFO-106645",
         semesters: vec![Unknown],
         requirements: vec![],
+        force: false,
     };
 
     let advanced_sat_solving = Module {
@@ -508,6 +545,7 @@ fn main() {
         identifier: "M-INFO-106085",
         semesters: vec![Winter],
         requirements: vec![PRACTICAL_SAT_ID],
+        force: false,
     };
 
     let fuzzy_sets = Module {
@@ -518,6 +556,7 @@ fn main() {
         identifier: "M-INFO-100839",
         semesters: vec![Summer],
         requirements: vec![FORMSYS_ID],
+        force: false,
     };
 
     let route_planning = Module {
@@ -528,6 +567,7 @@ fn main() {
         identifier: "M-INFO-100031",
         semesters: vec![Summer],
         requirements: vec![ALGO2_ID],
+        force: false,
     };
 
     let algorithmic_graph_theory = Module {
@@ -538,6 +578,7 @@ fn main() {
         identifier: "M-INFO-100762",
         semesters: vec![Unknown],
         requirements: vec![ALGO2_ID],
+        force: false,
     };
 
     let parallel_algorithms = Module {
@@ -548,6 +589,7 @@ fn main() {
         identifier: "M-INFO-100796",
         semesters: vec![Winter],
         requirements: vec![ALGO2_ID],
+        force: false,
     };
 
     let randomized_algorithmic = Module {
@@ -558,6 +600,7 @@ fn main() {
         identifier: "M-INFO-106469",
         semesters: vec![Winter],
         requirements: vec![WT_ID, ALGO2_ID],
+        force: false,
     };
 
     let crypto_foundations = Module {
@@ -568,6 +611,7 @@ fn main() {
         identifier: "M-INFO-105584",
         semesters: vec![Winter],
         requirements: vec![ITSEC_ID],
+        force: false,
     };
 
     let appsec = Module {
@@ -578,6 +622,7 @@ fn main() {
         identifier: "M-INFO-103166",
         semesters: vec![Winter],
         requirements: vec![],
+        force: true,
     };
 
     let cryptanalysis = Module {
@@ -588,6 +633,7 @@ fn main() {
         identifier: "M-INFO-105337",
         semesters: vec![Summer],
         requirements: vec![ITSEC_ID],
+        force: false,
     };
 
     let cg2 = Module {
@@ -598,6 +644,7 @@ fn main() {
         identifier: "M-INFO-106685",
         semesters: vec![Summer],
         requirements: vec![CG_ID],
+        force: false,
     };
 
     const FOTO_BS_ID: &str = "M-INFO-100731";
@@ -609,6 +656,7 @@ fn main() {
         identifier: FOTO_BS_ID,
         semesters: vec![Winter],
         requirements: vec![CG_ID],
+        force: false,
     };
 
     const VISUALIZATION_ID: &str = "M-INFO-100738";
@@ -620,6 +668,7 @@ fn main() {
         identifier: VISUALIZATION_ID,
         semesters: vec![Summer],
         requirements: vec![CG_ID],
+        force: false,
     };
 
     let scientific_visualization = Module {
@@ -630,6 +679,7 @@ fn main() {
         identifier: "M-INFO-106686",
         semesters: vec![Winter, Summer],
         requirements: vec![VISUALIZATION_ID, CG_ID],
+        force: false,
     };
 
     let rendering = Module {
@@ -640,6 +690,7 @@ fn main() {
         identifier: "M-INFO-106687",
         semesters: vec![Winter, Summer],
         requirements: vec![CG_ID, FOTO_BS_ID],
+        force: false,
     };
 
     let virtual_systems = Module {
@@ -650,6 +701,7 @@ fn main() {
         identifier: "M-INFO-108867",
         semesters: vec![Winter],
         requirements: vec![OS_ID],
+        force: false,
     };
 
     let os_seminar = Module {
@@ -660,6 +712,7 @@ fn main() {
         identifier: "M-INFO-101540",
         semesters: vec![Unknown],
         requirements: vec![OS_ID],
+        force: false,
     };
 
     let advanced_os_seminar = Module {
@@ -670,10 +723,11 @@ fn main() {
         identifier: "M-INFO-100849",
         semesters: vec![Summer],
         requirements: vec![OS_ID],
+        force: false,
     };
 
-    let modules = vec![proseminar, formsys, cg, algo2, itsec, robotics, formsys2_therory, formsys2_application, practical_sat_solving, algorithm_engineering, algorithmic_graph_theory, clogic, cps_logical_foundations, complexity_theory, parameterized_algos, parallel_algorithms, seminar_complexity_theory, advanced_sat_solving, fuzzy_sets, route_planning,
-        randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
+    let modules = vec![formsys, cg, algo2, itsec, robotics, formsys2_therory, formsys2_application, practical_sat_solving, algorithm_engineering, algorithmic_graph_theory, clogic, cps_logical_foundations, complexity_theory, parameterized_algos, parallel_algorithms, seminar_complexity_theory, advanced_sat_solving, fuzzy_sets, route_planning,
+                       randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
 
     let plan = Plan::from_semesters_with_modules(&semesters, &modules);
     println!("{}", plan.get_solutions().unwrap());

@@ -98,6 +98,7 @@ pub struct Module {
     pub(crate) identifier: &'static str,
     pub(crate) requirements: Vec<&'static str>,
     pub(crate) semesters: Vec<SemesterType>,
+    pub(crate) force: bool
 }
 
 impl Display for Module {
@@ -144,7 +145,7 @@ impl Plan {
         let [bachelor, master] = &degree_values[..]
         else { panic!("aaaa") };
         let bachelor = bachelor.apply(&[]);
-        let _master = master.apply(&[]);
+        let master = master.apply(&[]);
 
         let [bachelor_tester, master_tester] = &degree_testers[..]
         else { panic!("aaaa") };
@@ -236,7 +237,7 @@ impl Plan {
             master_lab_module_count += is_master.ite(&z3_module.ects, &zero);
         }
 
-        solver.assert_and_track(&master_lab_module_count.ge(&Int::from_i64(&context, 6)), &Bool::new_const(&context, "Master lab module count"));
+        solver.assert_and_track(&master_lab_module_count.ge(&Int::from_i64(&context, 6 * 2)), &Bool::new_const(&context, "Master lab module count"));
 
         // Master seminare
         let seminar_modules: Vec<_> = self.modules.iter().filter(|module| matches!(module.module_type, ModuleType::Seminar {is_pro: _})).collect();
@@ -247,13 +248,13 @@ impl Plan {
             master_seminar_module_count += is_master.ite(&z3_module.ects, &zero);
         }
 
-        solver.assert_and_track(&master_seminar_module_count.ge(&Int::from_i64(&context, 3)), &Bool::new_const(&context, "Master seminar module count"));
+        solver.assert_and_track(&master_seminar_module_count.ge(&Int::from_i64(&context, 2 * 3)), &Bool::new_const(&context, "Master seminar module count"));
 
         let lab_seminar_sum = master_seminar_module_count + master_lab_module_count;
-        solver.assert_and_track(&lab_seminar_sum.ge(&Int::from_i64(&context, 3)), &Bool::new_const(&context, "Master lab + seminar module count"));
+        solver.assert_and_track(&lab_seminar_sum.ge(&Int::from_i64(&context, 2 * 3)), &Bool::new_const(&context, "Master lab + seminar module count"));
 
         // Master sum adjusted for not-counted seminars/labs
-        let overlap = Int::from_i64(&context, 18) - lab_seminar_sum;
+        let overlap = Int::from_i64(&context, 18 * 2) - lab_seminar_sum;
         let overlap = overlap.ge(&one).ite(&overlap, &zero);
         master_sum -= overlap;
         solver.assert_and_track(&master_sum.le(&master_max), &Bool::new_const(&context, "Master max ects"));
@@ -310,15 +311,18 @@ impl Plan {
                 solver.assert_and_track(&condition, &Bool::new_const(&context, format!("If {} is in semester {index} it has to be {:?}", z3_module.identifier, semester.degrees[0])));
             }
         }
-        
+
+        let mut specialty_counts = [zero.clone(), zero.clone()];
+        let mut specialty_counts_no_root = [zero.clone(), zero.clone()];
         // Check specialty ects requirements
-        for specialty in [&first_specialty, &second_specialty] {
+        for (index, specialty) in [&first_specialty, &second_specialty].into_iter().enumerate() {
             let mut total_sum = Int::from_i64(&context, 0);
             let mut without_root = Int::from_i64(&context, 0);
             
             for z3_module in &z3_modules {
                 let is_specialty = z3_module.associated_specialty._eq(specialty);
-                let is_relevant = is_specialty & &z3_module.used;
+                let is_master = z3_module.degree._eq(&master.as_datatype().unwrap());
+                let is_relevant = is_specialty & &z3_module.used & is_master;
                 let total_count = is_relevant.ite(&z3_module.ects, &zero);
                 total_sum += total_count;
                 
@@ -328,12 +332,15 @@ impl Plan {
                 without_root += without_root_count
             }
 
-            solver.assert_and_track(&total_sum.ge(&Int::from_i64(&context, 15)), &Bool::new_const(&context, "Specialty min ects (total)"));
+            specialty_counts[index] = total_sum;
+            solver.assert_and_track(&specialty_counts[index].ge(&Int::from_i64(&context, 15 * 2)), &Bool::new_const(&context, "Specialty min ects (total)"));
+            
             let (telematics_index, _) = Speciality::iter().enumerate().find(|(_, entry)| *entry == Telematics).unwrap();
             let telematics_value = &speciality_values[telematics_index];
             let is_telematics = specialty._eq(telematics_value);
-            let min_without_root = is_telematics.ite(&Int::from_i64(&context, 8), &Int::from_i64(&context, 10));
-            solver.assert_and_track(&without_root.ge(&min_without_root), &Bool::new_const(&context, "Specialty min ects (without root)"))
+            let min_without_root = is_telematics.ite(&Int::from_i64(&context, 8 * 2), &Int::from_i64(&context, 10 * 2));
+            specialty_counts_no_root[index] = without_root;
+            solver.assert_and_track(&specialty_counts_no_root[index].ge(&min_without_root), &Bool::new_const(&context, "Specialty min ects (without root)"));
         }
 
         if solver.check() == SatResult::Unsat {
@@ -372,8 +379,11 @@ impl Plan {
             semester
         }).collect::<Vec<_>>();
         
-        let specialties = [first_specialty, second_specialty].map(|specialty| model.eval(&specialty, true).unwrap().to_string()).map(|name| Speciality::from_str(&name).ok());
+        let specialties = [&first_specialty, &second_specialty].map(|specialty| model.eval(specialty, true).unwrap().to_string()).map(|name| Speciality::from_str(&name).ok());
 
+        dbg!(model.eval(&specialty_counts[0], true).unwrap().as_i64());
+        dbg!(z3_modules.iter().map(|module| (module.identifier, model.eval(&module.associated_specialty._eq(&first_specialty), true).unwrap().as_bool().unwrap())).collect::<Vec<_>>());
+        
         Some(Plan {
             semesters,
             modules: vec![],
