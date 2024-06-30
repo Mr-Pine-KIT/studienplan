@@ -1,17 +1,34 @@
+use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::f64;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, write};
+use std::hash::Hash;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 use z3::{Config, Context, FuncDecl, SatResult, Solver, Sort, Symbol};
 use z3::ast::{Ast, Bool, Datatype, Int};
-
+use crate::model::Degree::Bachelor;
 use crate::model::SemesterType::Unknown;
 use crate::model::Speciality::Telematics;
 use crate::z3model::Z3Module;
 
-#[derive(Debug, Display, Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Ord, PartialOrd, EnumIter, EnumString)]
+#[derive(
+    Debug,
+    Display,
+    Eq,
+    PartialEq,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    Ord,
+    PartialOrd,
+    EnumIter,
+    EnumString,
+    Hash
+)]
 pub enum Speciality {
     Theoretics,
     Algorithms,
@@ -35,7 +52,7 @@ impl Speciality {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Ord, PartialOrd)]
+#[derive(Debug, Eq, PartialEq, Clone, Ord, PartialOrd, Hash)]
 pub enum Degree {
     Bachelor,
     Master(Vec<Speciality>),
@@ -55,7 +72,7 @@ impl SemesterDegree {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum SemesterType {
     Summer,
     Winter,
@@ -82,14 +99,25 @@ impl Display for Semester {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum ModuleType {
     Lecture { is_root: bool },
     Lab,
     Seminar { is_pro: bool },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+impl ModuleType {
+    pub fn prefix(&self) -> &'static str {
+        match &self {
+            ModuleType::Lecture { is_root: _ } => "",
+            ModuleType::Lab => "Praktikum ",
+            ModuleType::Seminar { is_pro: true } => "Proseminar ",
+            ModuleType::Seminar { is_pro: false } => "Seminar ",
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Module {
     pub(crate) module_type: ModuleType,
     pub(crate) half_ects: i32,
@@ -98,12 +126,12 @@ pub struct Module {
     pub(crate) identifier: &'static str,
     pub(crate) requirements: Vec<&'static str>,
     pub(crate) semesters: Vec<SemesterType>,
-    pub(crate) force: bool
+    pub(crate) force: bool,
 }
 
 impl Display for Module {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} [{}] as {:?} with {} ECTS", self.name, self.identifier, self.degree, f64::from(self.half_ects) / 2.0)
+        write!(f, "{}{} [{}] as {:?} with {} ECTS", self.module_type.prefix(), self.name, self.identifier, self.degree, f64::from(self.half_ects) / 2.0)
     }
 }
 
@@ -111,7 +139,7 @@ impl Display for Module {
 pub struct Plan {
     modules: Vec<Module>,
     semesters: Vec<Semester>,
-    specialties: [Option<Speciality>; 2]
+    specialties: [Option<Speciality>; 2],
 }
 
 impl Plan {
@@ -122,7 +150,7 @@ impl Plan {
         let plan = Plan {
             modules,
             semesters: semesters.to_vec(),
-            specialties: [None, None]
+            specialties: [None, None],
         };
         plan.check_basic();
 
@@ -136,7 +164,7 @@ impl Plan {
         assert_eq!(invalid_root_modules, Vec::<&Module>::new(), "Stammmodule müssen 6 ECTS haben")
     }
 
-    pub fn get_solutions(self) -> Option<Plan> {
+    pub fn get_solutions(self) -> Vec<Plan> {
         let context = Context::new(&Config::new());
         let solver = Solver::new(&context);
 
@@ -149,13 +177,13 @@ impl Plan {
 
         let [bachelor_tester, master_tester] = &degree_testers[..]
         else { panic!("aaaa") };
-        
+
         let (speciality_sort, speciality_values, _speciality_testers) = Speciality::z3_enum(&context);
         let speciality_values = speciality_values.iter().map(|val| val.apply(&[]).as_datatype().unwrap()).collect::<Vec<_>>();
 
         let first_specialty = Datatype::new_const(&context, "First specialty", &speciality_sort);
         let second_specialty = Datatype::new_const(&context, "Second specialty", &speciality_sort);
-        
+
         solver.assert_and_track(&Datatype::distinct(&context, &[&first_specialty, &second_specialty]), &Bool::new_const(&context, "Must be two specialties"));
 
         let zero = Int::from_i64(&context, 0);
@@ -264,9 +292,10 @@ impl Plan {
         for z3_module in &z3_modules {
             let module = self.modules.iter().find(|module| module.identifier == z3_module.identifier).unwrap();
             for &requirement in &module.requirements {
-                let required_z3_module = z3_modules.iter().find(|module| module.identifier == requirement).unwrap();
+                let required_z3_module = z3_modules.iter().find(|module| module.identifier == requirement).unwrap_or_else(|| panic!("Did not find identifier {}", requirement));
 
-                solver.assert_and_track(&z3_module.semester.gt(&required_z3_module.semester), &Bool::new_const(&context, format!("{} is a requirement of {}_{}", required_z3_module.identifier, module.name, z3_module.identifier)))
+                solver.assert_and_track(&z3_module.semester.gt(&required_z3_module.semester), &Bool::new_const(&context, format!("{} is a requirement of {}_{} (semester)", required_z3_module.identifier, module.name, z3_module.identifier)));
+                solver.assert_and_track(&z3_module.used.implies(&required_z3_module.used), &Bool::new_const(&context, format!("{} is a requirement of {}_{} (usage)", required_z3_module.identifier, module.name, z3_module.identifier)));
             }
         }
 
@@ -318,14 +347,14 @@ impl Plan {
         for (index, specialty) in [&first_specialty, &second_specialty].into_iter().enumerate() {
             let mut total_sum = Int::from_i64(&context, 0);
             let mut without_root = Int::from_i64(&context, 0);
-            
+
             for z3_module in &z3_modules {
                 let is_specialty = z3_module.associated_specialty._eq(specialty);
                 let is_master = z3_module.degree._eq(&master.as_datatype().unwrap());
                 let is_relevant = is_specialty & &z3_module.used & is_master;
                 let total_count = is_relevant.ite(&z3_module.ects, &zero);
                 total_sum += total_count;
-                
+
                 let module = self.modules.iter().find(|module| module.identifier == z3_module.identifier).unwrap();
                 let is_root = matches!(module.module_type, ModuleType::Lecture {is_root: true});
                 let without_root_count = (is_root & is_relevant).ite(&z3_module.ects, &zero);
@@ -334,7 +363,7 @@ impl Plan {
 
             specialty_counts[index] = total_sum;
             solver.assert_and_track(&specialty_counts[index].ge(&Int::from_i64(&context, 15 * 2)), &Bool::new_const(&context, "Specialty min ects (total)"));
-            
+
             let (telematics_index, _) = Speciality::iter().enumerate().find(|(_, entry)| *entry == Telematics).unwrap();
             let telematics_value = &speciality_values[telematics_index];
             let is_telematics = specialty._eq(telematics_value);
@@ -343,52 +372,58 @@ impl Plan {
             solver.assert_and_track(&specialty_counts_no_root[index].ge(&min_without_root), &Bool::new_const(&context, "Specialty min ects (without root)"));
         }
 
+        let mut solutions = vec![];
+
         if solver.check() == SatResult::Unsat {
             println!("Unsat :(");
             dbg!(&solver.get_unsat_core());
-            return None;
+            return solutions;
         }
 
-        let model = solver.get_model().unwrap();
-        let semesters = self.semesters.iter().enumerate().map(|(index, semester)| {
-            let mut modules: Vec<_> = z3_modules.iter().filter(|z3_module| {
-                let is_used = model.eval(&z3_module.used, true).unwrap().as_bool().unwrap();
-                let semester = model.eval(&z3_module.semester, true).unwrap().as_i64().unwrap();
-                is_used && semester == index as i64
-            }).map(|z3_module| {
-                let is_bachelor = model.eval(&z3_module.degree, true).unwrap().eq(&bachelor.as_datatype().unwrap());
+        while solver.check() == SatResult::Sat {
+            let model = solver.get_model().unwrap();
+            let semesters = self.semesters.iter().enumerate().map(|(index, semester)| {
+                let mut modules: Vec<_> = z3_modules.iter().filter(|z3_module| {
+                    let is_used = model.eval(&z3_module.used, true).unwrap().as_bool().unwrap();
+                    let semester = model.eval(&z3_module.semester, true).unwrap().as_i64().unwrap();
+                    is_used && semester == index as i64
+                }).map(|z3_module| {
+                    let is_bachelor = model.eval(&z3_module.degree, true).unwrap().eq(&bachelor.as_datatype().unwrap());
 
-                let specialty = model.eval(&z3_module.associated_specialty, true).unwrap().to_string();
-                let specialty = Speciality::from_str(&specialty).unwrap();
+                    let specialty = model.eval(&z3_module.associated_specialty, true).unwrap().to_string();
+                    let specialty = Speciality::from_str(&specialty).unwrap();
 
-                let degree = if is_bachelor { Degree::Bachelor } else { Degree::Master(vec![specialty]) };
+                    let degree = if is_bachelor { Degree::Bachelor } else { Degree::Master(vec![specialty]) };
 
-                (z3_module, degree)
-            }).map(|(z3_module, degree)| {
-                let module = self.modules.iter().find(|module| module.identifier == z3_module.identifier).unwrap();
-                let mut module = module.clone();
-                module.degree = degree;
+                    (z3_module, degree)
+                }).map(|(z3_module, degree)| {
+                    let module = self.modules.iter().find(|module| module.identifier == z3_module.identifier).unwrap();
+                    let mut module = module.clone();
+                    module.degree = degree;
 
-                module
-            }).collect();
+                    module
+                }).collect();
 
-            let mut semester = semester.clone();
-            semester.modules.clear();
-            semester.modules.append(&mut modules);
+                let mut semester = semester.clone();
+                semester.modules.clear();
+                semester.modules.append(&mut modules);
 
-            semester
-        }).collect::<Vec<_>>();
-        
-        let specialties = [&first_specialty, &second_specialty].map(|specialty| model.eval(specialty, true).unwrap().to_string()).map(|name| Speciality::from_str(&name).ok());
+                semester
+            }).collect::<Vec<_>>();
 
-        dbg!(model.eval(&specialty_counts[0], true).unwrap().as_i64());
-        dbg!(z3_modules.iter().map(|module| (module.identifier, model.eval(&module.associated_specialty._eq(&first_specialty), true).unwrap().as_bool().unwrap())).collect::<Vec<_>>());
-        
-        Some(Plan {
-            semesters,
-            modules: vec![],
-            specialties
-        })
+            let specialties = [&first_specialty, &second_specialty].map(|specialty| model.eval(specialty, true).unwrap().to_string()).map(|name| Speciality::from_str(&name).ok());
+
+            solutions.push(Plan {
+                semesters,
+                modules: vec![],
+                specialties,
+            });
+
+            let differences: Vec<_> = z3_modules.iter().map(|module| &module.used).map(|property| !property._eq(&model.eval(property, true).unwrap())).collect();
+            let differences: Vec<_> = differences.iter().collect();
+            solver.assert_and_track(&Bool::or(&context, differences.as_slice()), &Bool::new_const(&context, "Ensure new solution"))
+        };
+        solutions
     }
 }
 
@@ -397,6 +432,46 @@ impl Display for Plan {
         for semester in &self.semesters {
             let _ = writeln!(f, "{}", semester);
         }
-        write!(f, "\nSpecialties: {}, {}", self.specialties[0].map(|specialty| specialty.to_string()).or_else(|| Some("unknown".to_string())).unwrap(), self.specialties[1].map(|specialty| specialty.to_string()).or_else(|| Some("unknown".to_string())).unwrap())
+        let _ = writeln!(f, "\nSpecialties: {}, {}", self.specialties[0].map(|specialty| specialty.to_string()).or_else(|| Some("unknown".to_string())).unwrap(), self.specialties[1].map(|specialty| specialty.to_string()).or_else(|| Some("unknown".to_string())).unwrap());
+        let bachelor_sum: i32 = self.semesters.iter().flat_map(|semester| &semester.modules).filter(|module| module.degree == Bachelor).map(|module| module.half_ects).sum();
+        let bachelor_sum = f64::from(bachelor_sum) / 2.0;
+        let master_sum: i32 = self.semesters.iter().flat_map(|semester| &semester.modules).filter(|module| matches!(module.degree, Degree::Master(_))).map(|module| module.half_ects).sum();
+        let master_sum = f64::from(master_sum) / 2.0;
+        write!(f, "ECTS Sum Bachelor {} Master: {}", bachelor_sum, master_sum)
+    }
+}
+
+pub struct PlanModuleView(pub Plan);
+
+impl PlanModuleView {
+    fn get_module_set(&self) -> HashSet<&Module> {
+        let self_modules: Vec<_> = self.0.semesters.iter().flat_map(|semester| &semester.modules).collect();
+        let mut module_set = HashSet::new();
+        module_set.extend(self_modules);
+        module_set
+    }
+}
+
+impl PartialEq for PlanModuleView {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_module_set() == other.get_module_set()
+    }
+}
+
+impl Eq for PlanModuleView {}
+
+impl Ord for PlanModuleView {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let mut module_list: Vec<_> = self.get_module_set().iter().copied().collect();
+        module_list.sort();
+        let mut other_module_list :Vec<_> = other.get_module_set().iter().copied().collect();
+        other_module_list.sort();
+        module_list.cmp(&other_module_list)
+    }
+}
+
+impl PartialOrd for PlanModuleView {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }

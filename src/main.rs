@@ -1,4 +1,4 @@
-use crate::model::{Module, Plan, Semester, SemesterDegree};
+use crate::model::{Module, Plan, PlanModuleView, Semester, SemesterDegree};
 use crate::model::Degree::{Bachelor, Master};
 use crate::model::ModuleType::{Lab, Lecture, Seminar};
 use crate::model::SemesterType::{Summer, Unknown, Winter};
@@ -191,7 +191,6 @@ fn get_bachelor_semester_3() -> Semester {
 }
 
 const INFOSEC_ID: &str = "M-INFO-106015";
-
 fn get_bachelor_semester_4() -> Semester {
     let infosec = Module {
         module_type: Lecture { is_root: false },
@@ -252,6 +251,8 @@ fn get_bachelor_semester_4() -> Semester {
     }
 }
 
+const FORMSYS_ID: &str = "M-INFO-100799";
+
 fn get_bachelor_semester_5() -> Semester {
     let propa = Module {
         module_type: Lecture { is_root: false },
@@ -263,6 +264,7 @@ fn get_bachelor_semester_5() -> Semester {
         requirements: vec![TGI_ID],
         force: false,
     };
+
     let gki = Module {
         module_type: Lecture { is_root: false },
         half_ects: 10,
@@ -273,7 +275,6 @@ fn get_bachelor_semester_5() -> Semester {
         requirements: vec![LA2_ID, WT_ID],
         force: false,
     };
-
     let proseminar = Module {
         module_type: Seminar { is_pro: true },
         half_ects: 6,
@@ -284,9 +285,19 @@ fn get_bachelor_semester_5() -> Semester {
         requirements: vec![],
         force: false,
     };
+    let formsys = Module {
+        module_type: Lecture { is_root: true },
+        half_ects: 12,
+        degree: Master(vec![Theoretics]),
+        name: "Formsys",
+        identifier: FORMSYS_ID,
+        semesters: vec![Winter],
+        requirements: vec![TGI_ID],
+        force: false,
+    };
     Semester {
         degrees: vec![SemesterDegree::Bachelor, SemesterDegree::Master],
-        modules: vec![propa, gki, proseminar],
+        modules: vec![propa, gki, proseminar, formsys],
         semester_type: Winter,
         number: 5,
         max_ects: 56 - 12,
@@ -377,18 +388,6 @@ fn main() {
         get_master_semester_3(),
         get_master_semester_4(),
     ];
-
-    const FORMSYS_ID: &str = "M-INFO-100799";
-    let formsys = Module {
-        module_type: Lecture { is_root: true },
-        half_ects: 12,
-        degree: Master(vec![Theoretics]),
-        name: "Formsys",
-        identifier: FORMSYS_ID,
-        semesters: vec![Winter],
-        requirements: vec![TGI_ID],
-        force: false,
-    };
 
     const CG_ID: &str = "M-INFO-100856";
     let cg = Module {
@@ -489,8 +488,8 @@ fn main() {
         name: "Constructive logic",
         identifier: "M-INFO-106256",
         semesters: vec![Summer],
-        requirements: vec![],
-        force: false,
+        requirements: vec![FORMSYS_ID],
+        force: true,
     };
 
     let cps_logical_foundations = Module {
@@ -501,7 +500,7 @@ fn main() {
         identifier: "M-INFO-106102",
         semesters: vec![Winter],
         requirements: vec![FORMSYS_ID],
-        force: false,
+        force: true,
     };
 
     let complexity_theory = Module {
@@ -523,7 +522,7 @@ fn main() {
         identifier: "M-INFO-105621",
         semesters: vec![Unknown],
         requirements: vec![ALGO1_ID],
-        force: false,
+        force: true,
     };
 
     let seminar_complexity_theory = Module {
@@ -567,7 +566,7 @@ fn main() {
         identifier: "M-INFO-100031",
         semesters: vec![Summer],
         requirements: vec![ALGO2_ID],
-        force: false,
+        force: true,
     };
 
     let algorithmic_graph_theory = Module {
@@ -656,7 +655,7 @@ fn main() {
         identifier: FOTO_BS_ID,
         semesters: vec![Winter],
         requirements: vec![CG_ID],
-        force: false,
+        force: true,
     };
 
     const VISUALIZATION_ID: &str = "M-INFO-100738";
@@ -701,7 +700,7 @@ fn main() {
         identifier: "M-INFO-108867",
         semesters: vec![Winter],
         requirements: vec![OS_ID],
-        force: false,
+        force: true,
     };
 
     let os_seminar = Module {
@@ -726,9 +725,14 @@ fn main() {
         force: false,
     };
 
-    let modules = vec![formsys, cg, algo2, itsec, robotics, formsys2_therory, formsys2_application, practical_sat_solving, algorithm_engineering, algorithmic_graph_theory, clogic, cps_logical_foundations, complexity_theory, parameterized_algos, parallel_algorithms, seminar_complexity_theory, advanced_sat_solving, fuzzy_sets, route_planning,
+    let modules = vec![cg, algo2, itsec, robotics, formsys2_therory, formsys2_application, practical_sat_solving, algorithm_engineering, algorithmic_graph_theory, clogic, cps_logical_foundations, complexity_theory, parameterized_algos, parallel_algorithms, seminar_complexity_theory, advanced_sat_solving, fuzzy_sets, route_planning,
                        randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
 
     let plan = Plan::from_semesters_with_modules(&semesters, &modules);
-    println!("{}", plan.get_solutions().unwrap());
+    let solutions = plan.get_solutions();
+    let mut interesting_solutions: Vec<_> = solutions.iter().map(|plan| PlanModuleView(plan.clone())).collect();
+    interesting_solutions.sort();
+    interesting_solutions.dedup();
+    println!("{}", interesting_solutions.iter().map(|plan| format!("{}", plan.0)).collect::<Vec<_>>().join("\n\n\n\n\n"));
+    println!("{}, {}", solutions.len(), interesting_solutions.len())
 }
