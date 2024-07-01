@@ -30,7 +30,7 @@ impl<'ctx> Z3Module<'ctx> {
             let matches_specialty = specialty_values.iter().map(|specialty_value| specialty_value._eq(&specialty)).collect::<Vec<_>>();
             let matches_specialty: Vec<_> = matches_specialty.iter().collect();
             let matches_any = Bool::or(context, matches_specialty.as_slice());
-            solver.assert_and_track(&matches_any, &Bool::new_const(context, format!("{}_{} must match it's specialties", module.name, module.identifier)))
+            solver.assert_and_track(&matches_any, &Bool::new_const(context, format!("{}_{} must match its specialties", module.name, module.identifier)))
         }
 
         let degree = Datatype::new_const(context, format!("degree_{}_{}", module.name, module.identifier), degree_sort);

@@ -288,7 +288,7 @@ fn get_bachelor_semester_5() -> Semester {
     let formsys = Module {
         module_type: Lecture { is_root: true },
         half_ects: 12,
-        degree: Master(vec![Theoretics]),
+        degree: Bachelor,//Master(vec![Theoretics]),
         name: "Formsys",
         identifier: FORMSYS_ID,
         semesters: vec![Winter],

@@ -357,7 +357,7 @@ impl Plan {
 
                 let module = self.modules.iter().find(|module| module.identifier == z3_module.identifier).unwrap();
                 let is_root = matches!(module.module_type, ModuleType::Lecture {is_root: true});
-                let without_root_count = (is_root & is_relevant).ite(&z3_module.ects, &zero);
+                let without_root_count = (is_relevant & !is_root).ite(&z3_module.ects, &zero);
                 without_root += without_root_count
             }
 
