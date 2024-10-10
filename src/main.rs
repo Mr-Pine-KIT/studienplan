@@ -58,7 +58,7 @@ fn get_bachelor_semester_1() -> Semester {
         modules: vec![programming, gbi, la1, hm1],
         semester_type: Winter,
         number: 1,
-        max_ects: 29 * 2,
+        ects: 40..29 * 2,
     }
 }
 
@@ -122,7 +122,7 @@ fn get_bachelor_semester_2() -> Semester {
         modules: vec![algo, swt, dt, hm2, la2],
         semester_type: Summer,
         number: 2,
-        max_ects: 58,
+        ects: 50..58,
     }
 }
 
@@ -186,7 +186,7 @@ fn get_bachelor_semester_3() -> Semester {
         modules: vec![ro, tgi, os, wt, pse],
         semester_type: Winter,
         number: 3,
-        max_ects: 64,
+        ects: 50..64,
     }
 }
 
@@ -247,7 +247,7 @@ fn get_bachelor_semester_4() -> Semester {
         modules: vec![infosec, rn, dbs, numerik, osdev],
         semester_type: Summer,
         number: 4,
-        max_ects: 46,
+        ects: 40..46,
     }
 }
 
@@ -300,7 +300,7 @@ fn get_bachelor_semester_5() -> Semester {
         modules: vec![propa, gki, proseminar, formsys],
         semester_type: Winter,
         number: 5,
-        max_ects: 56 - 12,
+        ects: 36..56 - 12,
     }
 }
 
@@ -320,7 +320,7 @@ fn get_bachelor_semester_6() -> Semester {
         modules: vec![algo_pg],
         semester_type: Summer,
         number: 6,
-        max_ects: 60,
+        ects: 40..60,
     }
 }
 
@@ -330,7 +330,7 @@ fn get_bachelor_semester_7() -> Semester {
         modules: vec![],
         semester_type: Winter,
         number: 7,
-        max_ects: 15,
+        ects: 10..25,
     }
 }
 
@@ -340,7 +340,7 @@ fn get_master_semester_1() -> Semester {
         modules: vec![],
         semester_type: Summer,
         number: 8,
-        max_ects: 64,
+        ects: 36..64,
     }
 }
 
@@ -350,7 +350,7 @@ fn get_master_semester_2() -> Semester {
         modules: vec![],
         semester_type: Winter,
         number: 9,
-        max_ects: 64,
+        ects: 40..64,
     }
 }
 
@@ -360,7 +360,7 @@ fn get_master_semester_3() -> Semester {
         modules: vec![],
         semester_type: Summer,
         number: 10,
-        max_ects: 64,
+        ects: 40..64,
     }
 }
 
@@ -370,7 +370,7 @@ fn get_master_semester_4() -> Semester {
         modules: vec![],
         semester_type: Winter,
         number: 11,
-        max_ects: 64,
+        ects: 40..64,
     }
 }
 
@@ -485,7 +485,7 @@ fn main() {
         module_type: Lecture { is_root: false },
         half_ects: 10,
         degree: Master(vec![Theoretics, SoftwareEngineering]),
-        name: "Constructive logic",
+        name: "Constructive logic / anderes Modul ( :( )von Platzer (Compilerbau) :pray:",
         identifier: "M-INFO-106256",
         semesters: vec![Summer],
         requirements: vec![FORMSYS_ID],
@@ -725,8 +725,7 @@ fn main() {
         force: false,
     };
 
-    let modules = vec![cg, algo2, itsec, robotics, formsys2_therory, formsys2_application, practical_sat_solving, algorithm_engineering, algorithmic_graph_theory, clogic, cps_logical_foundations, complexity_theory, parameterized_algos, parallel_algorithms, seminar_complexity_theory, advanced_sat_solving, fuzzy_sets, route_planning,
-                       randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
+    let modules = vec![cg, algo2, itsec, robotics, formsys2_therory, formsys2_application, practical_sat_solving, algorithm_engineering, algorithmic_graph_theory, clogic, cps_logical_foundations, complexity_theory, parameterized_algos, parallel_algorithms, seminar_complexity_theory, advanced_sat_solving, fuzzy_sets, route_planning, randomized_algorithmic, crypto_foundations, cryptanalysis, appsec, cg2, foto_bs, visualization, scientific_visualization, rendering, virtual_systems, os_seminar, advanced_os_seminar];
 
     let plan = Plan::from_semesters_with_modules(&semesters, &modules);
     let solutions = plan.get_solutions();
