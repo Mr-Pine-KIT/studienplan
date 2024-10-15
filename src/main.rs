@@ -69,7 +69,7 @@ const LA2_ID: &str = "T-MATH-102241";
 fn get_bachelor_semester_2() -> Semester {
     let swt = Module {
         module_type: Lecture { is_root: false },
-        half_ects: 10,
+        half_ects: 12,
         degree: Bachelor,
         name: "Softwaretechnik I",
         identifier: "M-INFO-101175",
